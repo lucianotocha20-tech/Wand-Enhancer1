@@ -1,0 +1,60 @@
+name: Build available components
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-available:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v2
+
+      - name: Restore AsarSharp packages
+        run: nuget restore AsarSharp/AsarSharp.csproj
+
+      - name: Build AsarSharp library
+        run: msbuild AsarSharp/AsarSharp.csproj /t:Build /p:Configuration=Release /p:Platform=AnyCPU
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web-panel/pnpm-lock.yaml
+
+      - name: Install web panel dependencies
+        working-directory: web-panel
+        run: pnpm install --frozen-lockfile
+
+      - name: Build web panel
+        working-directory: web-panel
+        run: pnpm run build
+
+      - name: Test web panel
+        working-directory: web-panel
+        run: pnpm exec vitest run
+
+      - name: Upload available components
+        uses: actions/upload-artifact@v4
+        with:
+          name: WandEnhancer-available-components
+          path: |
+            AsarSharp/bin/Release/AsarSharp.dll
+            web-panel/dist/
+          if-no-files-found: error
+          retention-days: 14
