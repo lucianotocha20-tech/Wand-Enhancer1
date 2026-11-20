@@ -20,7 +20,7 @@ jobs:
         uses: NuGet/setup-nuget@v2
 
       - name: Restore AsarSharp packages
-        run: nuget restore AsarSharp/AsarSharp.csproj
+        run: nuget restore AsarSharp/AsarSharp.csproj -SolutionDirectory .
 
       - name: Build AsarSharp library
         run: msbuild AsarSharp/AsarSharp.csproj /t:Build /p:Configuration=Release /p:Platform=AnyCPU
